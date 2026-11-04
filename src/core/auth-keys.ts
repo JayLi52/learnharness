@@ -31,6 +31,18 @@ export interface AuthKeyInfo {
 
 export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
+		id: "DOUBAO_CUSTOM_API_KEY",
+		label: "Doubao Custom",
+		description: "Doubao Custom web search — use a search-service API key (subscription or pay-as-you-go), not an Ark model key.",
+		docsUrl: "https://docs.volcengine.com/docs/networked-search/networked-search?lang=zh",
+	},
+	{
+		id: "DOUBAO_GLOBAL_API_KEY",
+		label: "Doubao Global",
+		description: "Doubao Global web search — use a search-service pay-as-you-go API key, not an Ark model key.",
+		docsUrl: "https://docs.volcengine.com/docs/networked-search/doubao-search-global-edition?lang=zh",
+	},
+	{
 		id: "DEEPGRAM_API_KEY",
 		label: "Deepgram",
 		description: "Speech-to-text key for dictation — needs ≥ Member permission in the Deepgram console to mint tokens.",
@@ -193,6 +205,8 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 			// No public format — a length floor + paste hygiene only.
 			return nonEmpty(20);
 		case "EXA_API_KEY":
+		case "DOUBAO_CUSTOM_API_KEY":
+		case "DOUBAO_GLOBAL_API_KEY":
 		case "OLLAMA_API_KEY":
 			// No documented key prefix: use the provider-key paste guard.
 			return nonEmpty(12);

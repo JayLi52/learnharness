@@ -84,6 +84,7 @@ export interface EffectiveSettings {
 		 *  passthrough delta — engine resolution (pin → auto → unavailable)
 		 *  lives in server/search.ts, where keys are visible. */
 		search: { engine?: SearchEngineId };
+		qoderResearch: NonNullable<AgentSettings["qoderResearch"]>;
 		/** Prober graph tools (wave 7): passthrough delta as stored —
 		 * absent/undefined enabled = ON; consumers use graphToolsEnabled. */
 		graphTools: { enabled?: boolean };
@@ -195,6 +196,7 @@ export function resolveSettings(record: UserSettings | null): EffectiveSettings 
 			tools: agent.tools ?? {},
 			prompts: agent.prompts ?? {},
 			search: agent.search ?? {},
+			qoderResearch: agent.qoderResearch ?? {},
 			graphTools: agent.graphTools ?? {},
 		},
 		models: {

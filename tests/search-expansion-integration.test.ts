@@ -27,6 +27,8 @@ after(() => {
 });
 
 const engines = [
+	{ id: "doubao-custom", envVar: "DOUBAO_CUSTOM_API_KEY", url: "https://open.feedcoopapi.com/search_api/web_search", header: "authorization", prefix: "Bearer ", payload: { Result: { WebResults: [] } } },
+	{ id: "doubao-global", envVar: "DOUBAO_GLOBAL_API_KEY", url: "https://open.feedcoopapi.com/search_api/global_search", header: "authorization", prefix: "Bearer ", payload: { Result: { Documents: [], ErrorCode: 0 } } },
 	{ id: "exa", envVar: "EXA_API_KEY", url: "https://api.exa.ai/search", header: "x-api-key", prefix: "", payload: { results: [] } },
 	{ id: "firecrawl", envVar: "FIRECRAWL_API_KEY", url: "https://api.firecrawl.dev/v2/search", header: "authorization", prefix: "Bearer ", payload: { success: true, data: { web: [] } } },
 	{ id: "ollama", envVar: "OLLAMA_API_KEY", url: "https://ollama.com/api/web_search", header: "authorization", prefix: "Bearer ", payload: { results: [] } },

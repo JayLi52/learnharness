@@ -29,6 +29,7 @@ import type { ChatStore, JobStore } from "../../core/ports.ts";
 import { runDemoBuilder } from "./demo-builder.ts";
 import { runPdfReaderAgent } from "./pdf-reader.ts";
 import { runResearcherAgent } from "./researcher.ts";
+import type { QoderResearchSettings } from "../tools/qoder-research.ts";
 import { runVisualMaker } from "./visual-maker.ts";
 import { loadLearnerImage, type LearnerImage } from "../tools/learner-image.ts";
 
@@ -66,6 +67,8 @@ export const pdfModelOverride: { current?: PiEngine } = {};
 type JobToolInput = ResearchToolInput | DemoToolInput | VisualToolInput | PdfToolInput;
 
 export interface JobRunnerDeps {
+	/** Optional additional tool for the existing researcher; never replaces its loop. */
+	qoderResearch?: () => QoderResearchSettings;
 	chatStore: ChatStore;
 	jobStore: JobStore;
 	/**
@@ -372,6 +375,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 		try {
 			jobStore.updateJob(jobId, { activity: "researching" });
 			const brief = await runResearcherAgent(prompt, {
+				qoderResearch: deps.qoderResearch,
 				engine: model,
 				search: deps.searchProvider,
 				pdfDir,

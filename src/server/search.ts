@@ -211,6 +211,44 @@ export function ollamaProvider(apiKey: string, fetchFn: FetchLike = fetch): Sear
 	};
 }
 
+/** Doubao's independent search-service APIs (not Ark's model web_search).
+ * Wire contracts: docs.volcengine.com/docs/networked-search/{networked-search,doubao-search-global-edition}.
+ * HTTP 200 can still carry a service error; never echo error bodies or keys. */
+export function doubaoProvider(edition: "custom" | "global", apiKey: string, fetchFn: FetchLike = fetch): SearchProvider {
+	const label = `Doubao ${edition === "custom" ? "Custom" : "Global"}`;
+	return {
+		id: edition === "custom" ? "doubao-custom" : "doubao-global",
+		async search(query, count) {
+			const limit = Math.min(edition === "custom" ? 50 : 20, Math.max(1, Math.floor(count)));
+			const resp = await fetchFn(`https://open.feedcoopapi.com/search_api/${edition === "custom" ? "web_search" : "global_search"}`, {
+				method: "POST",
+				headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+				body: JSON.stringify({ Query: query, SearchType: "web", ...(edition === "custom" ? { Count: limit, Filter: { NeedUrl: true } } : { DocCount: limit }) }),
+				signal: AbortSignal.timeout(30_000),
+			});
+			if (!resp.ok) throw new Error(`${label} search API ${resp.status}`);
+			const data = await searchJson(resp, label);
+			if (!data || typeof data !== "object") throw new Error(`${label} search API returned an invalid response`);
+			const envelope = data as { ResponseMetadata?: { Error?: unknown }; Result?: { ErrorCode?: unknown; WebResults?: unknown; Documents?: unknown; ResultCount?: unknown; TotalDocCount?: unknown } };
+			if (envelope.ResponseMetadata?.Error || (envelope.Result?.ErrorCode !== undefined && envelope.Result.ErrorCode !== 0)) {
+				throw new Error(`${label} search API reported a service error; check search-service credentials, quota and permissions`);
+			}
+			const result = envelope.Result;
+			const rows = edition === "custom" ? result?.WebResults : result?.Documents;
+			const total = edition === "custom" ? result?.ResultCount : result?.TotalDocCount;
+			if (!Array.isArray(rows) && !(rows == null && total === 0)) throw new Error(`${label} search API returned an invalid response`);
+			return (Array.isArray(rows) ? rows : []).flatMap((item): SearchHit[] => {
+				if (!item || typeof item !== "object") return [];
+				const row = item as { Title?: unknown; Url?: unknown; Summary?: unknown; Snippet?: unknown };
+				const snippet = edition === "custom"
+					? (typeof row.Summary === "string" && row.Summary.trim() ? row.Summary : row.Snippet)
+					: (Array.isArray(row.Snippet) ? row.Snippet.flatMap((s) => s && typeof s === "object" && s.Type === "text" && typeof s.Text === "string" ? [s.Text] : []).join(" ") : "");
+				return searchHit(row.Title, row.Url, snippet);
+			}).slice(0, limit);
+		},
+	};
+}
+
 /** Match Exa's bounded result contract for the other new adapters. */
 function searchHit(title: unknown, url: unknown, snippet: unknown): SearchHit[] {
 	if (typeof url !== "string" || !url.trim()) return [];
@@ -270,7 +308,7 @@ export function resolveSearchEngineFor(
 	return {
 		available: false,
 		engine: null,
-		reason: "no search engine configured — set a Tavily, Brave, Exa, Firecrawl, or Ollama search API key",
+		reason: "no search engine configured — set a Tavily, Brave, Exa, Firecrawl, Ollama, or Doubao search API key",
 		key: null,
 	};
 }
@@ -308,6 +346,10 @@ export function searchProvider(): SearchProvider | null {
 			return firecrawlProvider(resolved.key);
 		case "ollama":
 			return ollamaProvider(resolved.key);
+		case "doubao-custom":
+			return doubaoProvider("custom", resolved.key);
+		case "doubao-global":
+			return doubaoProvider("global", resolved.key);
 		default:
 			return null;
 	}

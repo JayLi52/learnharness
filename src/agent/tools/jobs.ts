@@ -18,6 +18,8 @@ import { resolveSourcePath } from "./fs-shared.ts";
 
 /** What the job tools need at execute time (injected by the composition root). */
 export interface JobToolContext {
+	/** Optional discovery hint for the connected local project. */
+	qoderProjectPath?: string;
 	chatId: string;
 	/** Creates the job record (deduped by toolCallId). */
 	jobStore: JobStore;
@@ -144,7 +146,9 @@ export function jobTools(ctx: JobToolContext): Record<string, AgentTool<any>> {
 		research: {
 			name: "research",
 			label: "research",
-			description: RESEARCH_DESCRIPTION,
+			description: ctx.qoderProjectPath
+				? `${RESEARCH_DESCRIPTION} A local project is connected at ${JSON.stringify(ctx.qoderProjectPath)}. The researcher can consult Qoder for project architecture, call chains, code, intranet MCP, skills and memory. Use research to obtain this context before teaching project-specific behavior; include the lesson context and cite the returned evidence.`
+				: RESEARCH_DESCRIPTION,
 			parameters: researchInputSchema,
 			execute: serverExecute("research", researchInputSchema, (input, { toolCallId }) =>
 				dispatch(ctx, "research", toolCallId, RESEARCH_ACK, input),

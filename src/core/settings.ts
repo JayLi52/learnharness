@@ -356,6 +356,8 @@ export interface AgentSettings {
 	 *  engine must still have its key, else search is honestly unavailable.
 	 *  Absent + no key = unavailable (no silent fallback, no default). */
 	search?: { engine?: SearchEngineId };
+	/** Optional project-context CLI tool; does not replace the researcher or its model. */
+	qoderResearch?: { enabled?: boolean; projectPath?: string };
 	/** Prober graph tools (wave 7, owner ruling 2026-09-23): read-only
 	 *  knowledge-graph views for the prober agent — a session list +
 	 *  per-session propositions with understanding levels. Its SUBJECT
@@ -697,6 +699,13 @@ function sanitizeBooleanMap(raw: unknown): Record<string, boolean> | undefined {
 
 function sanitizeAgent(raw: Record<string, unknown>): AgentSettings {
 	const out: AgentSettings = {};
+	if (raw.qoderResearch && typeof raw.qoderResearch === "object" && !Array.isArray(raw.qoderResearch)) {
+		const qoder = raw.qoderResearch as Record<string, unknown>;
+		out.qoderResearch = {
+			enabled: qoder.enabled === true,
+			...(typeof qoder.projectPath === "string" && qoder.projectPath.trim() ? { projectPath: qoder.projectPath.trim() } : {}),
+		};
+	}
 	if (raw.models !== null && typeof raw.models === "object" && !Array.isArray(raw.models)) {
 		const models: Partial<Record<BackgroundModelRole, RoleModelOverride>> = {};
 		for (const [role, override] of Object.entries(raw.models as Record<string, unknown>)) {

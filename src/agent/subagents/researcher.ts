@@ -5,6 +5,8 @@ import { createPdfReadTools } from "../tools/pdf-read.ts";
 import type { SearchProvider } from "../../core/search.ts";
 import type { PiEngine } from "../models.ts";
 import { runSubagent } from "./pi-run.ts";
+import { createQoderResearchTool, type QoderResearchSettings } from "../tools/qoder-research.ts";
+import type { runQoderResearch } from "./qoder-research.ts";
 
 /**
  * The researcher sub-agent (vision §2.5): a SEPARATE ToolLoopAgent instance
@@ -68,6 +70,9 @@ Numbered findings with inline source citations:
 What couldn't be answered. Suggested next steps.`;
 
 export interface ResearcherRunOptions {
+	qoderResearch?: () => QoderResearchSettings;
+	/** Offline transport seam, not a model/provider override. */
+	qoderRun?: typeof runQoderResearch;
 	engine?: PiEngine;
 	/** The search seam (search port wave, 2026-09-20): resolves the LIVE
 	 *  provider per call, null = honestly unavailable (the web_search tool
@@ -94,11 +99,13 @@ export interface ResearcherRunOptions {
 export async function runResearcherAgent(prompt: string, opts: ResearcherRunOptions = {}): Promise<string> {
 	const tools = Object.values(createWebTools(opts.search ?? (() => null)));
 	if (opts.pdfDir) tools.push(...Object.values(createPdfReadTools(opts.pdfDir)));
+	const qoderEnabled = opts.qoderResearch?.().enabled === true;
+	if (qoderEnabled) tools.push(createQoderResearchTool(opts.qoderResearch!, opts.qoderRun));
 	const { text } = await runSubagent(tools, {
 		role: "researcher",
 		prompt,
 		engine: opts.engine,
-		systemPrompt: INSTRUCTIONS,
+		systemPrompt: qoderEnabled ? `${INSTRUCTIONS}\n\nConnected project context is available through qoder_research. For local-project or intranet questions, consult it before making project-specific claims. It can use Qoder's native MCP, skills, memory and web search. Preserve its file/line references, source citations and uncertainty in your final brief. Never send private project code or intranet details to public web search; use public tools only for general public principles. A failed Qoder call leaves project knowledge unverified.` : INSTRUCTIONS,
 		maxTurns: 12,
 		abortSignal: opts.abortSignal,
 		onUsage: opts.onUsage,

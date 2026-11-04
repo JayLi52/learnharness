@@ -95,6 +95,7 @@ function settlementErrorText(error: unknown): string {
 }
 
 const jobRunner = createJobRunner({
+	qoderResearch: () => effectiveSettings().agent.qoderResearch,
 	chatStore: stores.chatStore,
 	jobStore: stores.jobStore,
 	deliver: deliverJobResult,
@@ -235,6 +236,7 @@ export async function handleChatInput(
 	// write-ahead persist (nothing durable changes), and every downstream
 	// resolution (jobs/extraction gate per-need on their own tiers).
 	const effective = effectiveSettings();
+	const qoderProjectPath = effective.agent.qoderResearch.enabled ? effective.agent.qoderResearch.projectPath : undefined;
 	const conversation = resolveConversationSpec(record.settings, effective.models.strong);
 	if (!conversation) {
 		const envelope = modelsNotConfigured(["strong"]);
@@ -483,6 +485,7 @@ export async function handleChatInput(
 						// absent when no engine is live) and the map readers behind
 						// the SAME settings gate as the prober's.
 						jobs: {
+							qoderProjectPath,
 							chatId,
 							jobStore: stores.jobStore,
 							spawn: (job, input) => void jobRunner.runJob(job.id, input),
@@ -495,6 +498,7 @@ export async function handleChatInput(
 			: teaching
 			? createTeacherAgent(
 					{
+						qoderProjectPath,
 						chatId,
 						chatStore: stores.chatStore,
 						jobStore: stores.jobStore,
@@ -507,6 +511,7 @@ export async function handleChatInput(
 				)
 			: createProberAgent(
 					{
+						qoderProjectPath,
 						chatId,
 						chatStore: stores.chatStore,
 						deliver: (steer) => void deliverJobResult(steer),

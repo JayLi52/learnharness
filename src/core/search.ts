@@ -35,6 +35,8 @@ export const SEARCH_ENGINES = [
 	{ id: "exa", label: "Exa", envVar: "EXA_API_KEY" },
 	{ id: "firecrawl", label: "Firecrawl", envVar: "FIRECRAWL_API_KEY" },
 	{ id: "ollama", label: "Ollama", envVar: "OLLAMA_API_KEY" },
+	{ id: "doubao-custom", label: "Doubao Custom", envVar: "DOUBAO_CUSTOM_API_KEY" },
+	{ id: "doubao-global", label: "Doubao Global", envVar: "DOUBAO_GLOBAL_API_KEY" },
 ] as const;
 
 export type SearchEngineId = (typeof SEARCH_ENGINES)[number]["id"];
