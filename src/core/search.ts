@@ -30,13 +30,13 @@ export interface SearchHit {
 /** Search engines in automatic preference order. Keep existing preferences
  * stable when adding an engine: an explicit pin always wins. */
 export const SEARCH_ENGINES = [
+	{ id: "doubao-global", label: "Doubao Global", envVar: "DOUBAO_GLOBAL_API_KEY" },
 	{ id: "tavily", label: "Tavily", envVar: "TAVILY_API_KEY" },
 	{ id: "brave", label: "Brave", envVar: "BRAVE_API_KEY" },
 	{ id: "exa", label: "Exa", envVar: "EXA_API_KEY" },
 	{ id: "firecrawl", label: "Firecrawl", envVar: "FIRECRAWL_API_KEY" },
 	{ id: "ollama", label: "Ollama", envVar: "OLLAMA_API_KEY" },
 	{ id: "doubao-custom", label: "Doubao Custom", envVar: "DOUBAO_CUSTOM_API_KEY" },
-	{ id: "doubao-global", label: "Doubao Global", envVar: "DOUBAO_GLOBAL_API_KEY" },
 ] as const;
 
 export type SearchEngineId = (typeof SEARCH_ENGINES)[number]["id"];
